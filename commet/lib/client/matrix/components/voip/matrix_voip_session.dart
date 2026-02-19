@@ -214,6 +214,23 @@ class MatrixVoipSession implements VoipSession {
   }
 
   @override
+  Future<void> changeStreamQuality() async {
+    for (var stream in session.getLocalStreams) {
+      if (stream.purpose == matrix.SDPStreamMetadataPurpose.Screenshare) {
+        await session.localScreenSharingStream?.stream
+            ?.getVideoTracks()
+            .first
+            .applyConstraints({
+          'width': 128,
+          'height': 72,
+          'frameRate': 30.0,
+        });
+      }
+    }
+    print("changed voip quality");
+  }
+
+  @override
   Future<void> stopScreenshare() async {
     for (var element in session.getLocalStreams.where((element) =>
         element.purpose == matrix.SDPStreamMetadataPurpose.Screenshare)) {

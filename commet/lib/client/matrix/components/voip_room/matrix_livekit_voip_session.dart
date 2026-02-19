@@ -285,6 +285,33 @@ class MatrixLivekitVoipSession implements VoipSession {
   }
 
   @override
+  Future<void> changeStreamQuality() async {
+    final local = livekitRoom.localParticipant;
+    if (local == null) {
+      return;
+    }
+
+    for (var pub in local.trackPublications.values) {
+      // only adjust the screen‑share video track
+      if (pub.isScreenShare && pub.track is lk.LocalVideoTrack) {
+        final lk.LocalVideoTrack track = pub.track as lk.LocalVideoTrack;
+        try {
+          await track.mediaStreamTrack.applyConstraints({
+            'width': 128,
+            'height': 72,
+            'frameRate': 30.0,
+          });
+        } catch (e) {
+          Log.w('changeStreamQuality: failed to apply constraints: $e');
+        }
+      }
+    }
+
+    // notify any listeners so the UI can refresh if it cares about quality
+    _stateChanged.add(());
+  }
+
+  @override
   Future<void> stopScreenshare() async {
     await livekitRoom.localParticipant?.setScreenShareEnabled(false);
 

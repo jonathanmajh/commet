@@ -68,6 +68,8 @@ abstract class VoipSession {
 
   Future<void> stopScreenshare();
 
+  Future<void> changeStreamQuality();
+
   Future<void> setCamera(MediaDeviceInfo? device);
 
   Future<void> stopCamera();

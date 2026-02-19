@@ -19,6 +19,7 @@ class CallView extends StatefulWidget {
     this.setMicrophoneMute,
     this.pickScreenshareSource,
     this.stopScreenshare,
+    this.changeStreamQuality,
     this.pickCamera,
     this.disableCamera,
     this.hangUp,
@@ -33,6 +34,7 @@ class CallView extends StatefulWidget {
   final Future<void> Function(bool)? setMicrophoneMute;
   final Future<void> Function()? pickScreenshareSource;
   final Future<void> Function()? stopScreenshare;
+  final Future<void> Function()? changeStreamQuality;
   final Future<void> Function()? pickCamera;
   final Future<void> Function()? disableCamera;
   final Future<void> Function()? hangUp;
@@ -139,12 +141,20 @@ class _CallViewState extends State<CallView> {
                         radius: buttonRadius,
                         icon: Icons.screen_share_outlined,
                         onPressed: widget.pickScreenshareSource),
-                  if (widget.currentSession.isSharingScreen && canScreenshare)
+                  if (widget.currentSession.isSharingScreen &&
+                      canScreenshare) ...[
                     tiamat.CircleButton(
                       radius: buttonRadius,
                       icon: Icons.stop_screen_share,
                       onPressed: widget.stopScreenshare,
                     ),
+                    tiamat.CircleButton(
+                      // stream quality
+                      radius: buttonRadius,
+                      icon: Icons.high_quality,
+                      onPressed: widget.changeStreamQuality,
+                    ),
+                  ],
                   if (canMute)
                     tiamat.CircleButton(
                       radius: buttonRadius,

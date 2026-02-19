@@ -20,6 +20,7 @@ class _CallWidgetState extends State<CallWidget> {
       widget.session,
       pickScreenshareSource: pickScreenShareSource,
       stopScreenshare: stopScreenshare,
+      changeStreamQuality: changeStreamQuality,
       setMicrophoneMute: setMicrophoneMute,
       pickCamera: pickCamera,
       disableCamera: disableCamera,
@@ -38,6 +39,10 @@ class _CallWidgetState extends State<CallWidget> {
 
   Future<void> stopScreenshare() {
     return widget.session.stopScreenshare();
+  }
+
+  Future<void> changeStreamQuality() {
+    return widget.session.changeStreamQuality();
   }
 
   Future<void> setMicrophoneMute(bool isMuted) {
