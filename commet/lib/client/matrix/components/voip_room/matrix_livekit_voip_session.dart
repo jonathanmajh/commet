@@ -286,6 +286,21 @@ class MatrixLivekitVoipSession implements VoipSession {
 
   @override
   Future<void> changeStreamQuality() async {
+    await setStreamQuality(
+      targetWidth: 320,
+      targetHeight: 180,
+      maxBitrate: 500000, // 500 kbps
+      maxFramerate: 15,
+    );
+  }
+
+  Future<void> setStreamQuality({
+    double? scaleResolutionDownBy,
+    int? targetWidth,
+    int? targetHeight,
+    int? maxBitrate,
+    int? maxFramerate,
+  }) async {
     final local = livekitRoom.localParticipant;
     if (local == null) {
       return;
@@ -296,19 +311,58 @@ class MatrixLivekitVoipSession implements VoipSession {
       if (pub.isScreenShare && pub.track is lk.LocalVideoTrack) {
         final lk.LocalVideoTrack track = pub.track as lk.LocalVideoTrack;
         try {
-          await track.mediaStreamTrack.applyConstraints({
-            'width': 128,
-            'height': 72,
-            'frameRate': 30.0,
-          });
+          // Use RTP encoding parameters which work cross-platform
+          final sender = track.sender;
+          if (sender != null) {
+            final params = sender.parameters;
+            if (params.encodings != null && params.encodings!.isNotEmpty) {
+              // Calculate scale factor from target resolution if provided
+              double? scale = scaleResolutionDownBy;
+              if (scale == null &&
+                  (targetWidth != null || targetHeight != null)) {
+                scale = _calculateScaleFactor(track, targetWidth, targetHeight);
+              }
+
+              if (scale != null) {
+                params.encodings![0].scaleResolutionDownBy = scale;
+              }
+              if (maxBitrate != null) {
+                params.encodings![0].maxBitrate = maxBitrate;
+              }
+              if (maxFramerate != null) {
+                params.encodings![0].maxFramerate = maxFramerate;
+              }
+              await sender.setParameters(params);
+              Log.i('setStreamQuality: resolution=$scale, '
+                  'bitrate=$maxBitrate, fps=$maxFramerate');
+            }
+          }
         } catch (e) {
-          Log.w('changeStreamQuality: failed to apply constraints: $e');
+          Log.w('setStreamQuality: failed to adjust quality: $e');
         }
       }
     }
 
     // notify any listeners so the UI can refresh if it cares about quality
     _stateChanged.add(());
+  }
+
+  double _calculateScaleFactor(
+    lk.LocalVideoTrack track,
+    int? targetWidth,
+    int? targetHeight,
+  ) {
+    final currentWidth = track.currentOptions.params.dimensions.width;
+    final currentHeight = track.currentOptions.params.dimensions.height;
+
+    if (targetWidth == null || targetHeight == null) {
+      return 1.0;
+    }
+
+    // Calculate scale based on which dimension is more restrictive
+    final widthScale = currentWidth / targetWidth;
+    final heightScale = currentHeight / targetHeight;
+    return widthScale > heightScale ? widthScale : heightScale;
   }
 
   @override
