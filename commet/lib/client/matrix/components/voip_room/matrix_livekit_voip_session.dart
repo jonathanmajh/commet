@@ -253,6 +253,13 @@ class MatrixLivekitVoipSession implements VoipSession {
       return;
     }
 
+    var track = await lk.LocalVideoTrack.createScreenShareTrack(
+        lk.ScreenShareCaptureOptions(
+      sourceId: source is SdkManagedScreenCaptureSource
+          ? null // don't provide a source id and let the SDK handle pick
+          : (source as WebrtcScreencaptureSource).source.id,
+      maxFrameRate: 30,
+      params: lk.VideoParametersPresets.h1080_169,
     final src = (source as WebrtcScreencaptureSource).source;
 
     var bitrate = (preferences.streamBitrate.value * 1_000_000).toInt();
@@ -347,6 +354,9 @@ class MatrixLivekitVoipSession implements VoipSession {
   Future<ScreenCaptureSource?> pickScreenCapture(BuildContext context) async {
     if (PlatformUtils.isAndroid) {
       return WebrtcAndroidScreencaptureSource.getCaptureSource(context);
+    }
+    if (PlatformUtils.isWeb) {
+      return SdkManagedScreenCaptureSource();
     }
     return WebrtcScreencaptureSource.showSelectSourcePrompt(context);
   }
