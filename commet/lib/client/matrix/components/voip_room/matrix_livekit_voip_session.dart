@@ -260,6 +260,8 @@ class MatrixLivekitVoipSession implements VoipSession {
           : (source as WebrtcScreencaptureSource).source.id,
       maxFrameRate: 30,
       params: lk.VideoParametersPresets.h1080_169,
+    ));
+
     final src = (source as WebrtcScreencaptureSource).source;
 
     var bitrate = (preferences.streamBitrate.value * 1_000_000).toInt();
@@ -278,7 +280,7 @@ class MatrixLivekitVoipSession implements VoipSession {
     Log.i(
         "Starting stream with settings: ${preferences.streamBitrate.value}Mbps, ${framerate}FPS, $codec ${res}");
 
-    var track = await lk.LocalVideoTrack.createScreenShareTrack(
+    track = await lk.LocalVideoTrack.createScreenShareTrack(
         lk.ScreenShareCaptureOptions(
       sourceId: src.id,
       maxFrameRate: framerate,
