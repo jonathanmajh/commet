@@ -302,10 +302,10 @@ class MatrixLivekitVoipSession implements VoipSession {
               maxFramerate: framerate.toInt(), maxBitrate: bitrate),
           videoCodec: preferences.streamCodec.value,
         ));
-
-    await track
-        .setDegradationPreference(lk.DegradationPreference.maintainFramerate);
-
+    if (source is WebrtcScreencaptureSource) {
+      await track
+          .setDegradationPreference(lk.DegradationPreference.maintainFramerate);
+    }
     _stateChanged.add(());
   }
 
