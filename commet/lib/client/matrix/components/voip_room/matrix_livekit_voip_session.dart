@@ -252,45 +252,44 @@ class MatrixLivekitVoipSession implements VoipSession {
       _stateChanged.add(());
       return;
     }
-
-    var track = await lk.LocalVideoTrack.createScreenShareTrack(
-        lk.ScreenShareCaptureOptions(
-      sourceId: source is SdkManagedScreenCaptureSource
-          ? null // don't provide a source id and let the SDK handle pick
-          : (source as WebrtcScreencaptureSource).source.id,
-      maxFrameRate: 30,
-      params: lk.VideoParametersPresets.h1080_169,
-    ));
-
-    final src = (source as WebrtcScreencaptureSource).source;
+    var track;
 
     var bitrate = (preferences.streamBitrate.value * 1_000_000).toInt();
     var framerate = preferences.streamFramerate.value;
     var codec = preferences.streamCodec.value;
     var res = lk.VideoDimensionsPresets.h720_169;
+    if (source is SdkManagedScreenCaptureSource) {
+      track = await lk.LocalVideoTrack.createScreenShareTrack(
+          lk.ScreenShareCaptureOptions(
+        sourceId: null,
+        maxFrameRate: 30,
+        params: lk.VideoParametersPresets.h1080_169,
+      ));
+    } else {
+      final src = (source as WebrtcScreencaptureSource).source;
 
-    try {
-      var resolution = preferences.streamResolution;
-      var parts = resolution.value.split("x");
-      res = lk.VideoDimensions(int.parse(parts[0]), int.parse(parts[1]));
-    } catch (e, s) {
-      Log.onError(e, s, content: "Error calculating desired resolution");
+      try {
+        var resolution = preferences.streamResolution;
+        var parts = resolution.value.split("x");
+        res = lk.VideoDimensions(int.parse(parts[0]), int.parse(parts[1]));
+      } catch (e, s) {
+        Log.onError(e, s, content: "Error calculating desired resolution");
+      }
+
+      Log.i(
+          "Starting stream with settings: ${preferences.streamBitrate.value}Mbps, ${framerate}FPS, $codec ${res}");
+
+      track = await lk.LocalVideoTrack.createScreenShareTrack(
+          lk.ScreenShareCaptureOptions(
+        sourceId: src.id,
+        maxFrameRate: framerate,
+        params: lk.VideoParameters(
+          dimensions: res,
+          encoding: lk.VideoEncoding(
+              maxFramerate: framerate.toInt(), maxBitrate: bitrate),
+        ),
+      ));
     }
-
-    Log.i(
-        "Starting stream with settings: ${preferences.streamBitrate.value}Mbps, ${framerate}FPS, $codec ${res}");
-
-    track = await lk.LocalVideoTrack.createScreenShareTrack(
-        lk.ScreenShareCaptureOptions(
-      sourceId: src.id,
-      maxFrameRate: framerate,
-      params: lk.VideoParameters(
-        dimensions: lk.VideoDimensionsPresets.h720_169,
-        encoding: lk.VideoEncoding(
-            maxFramerate: framerate.toInt(), maxBitrate: bitrate),
-      ),
-    ));
-
     print("Available codecs");
     livekitRoom.engine.enabledPublishCodecs?.forEach((i) => print(i.mime));
 
